@@ -1,0 +1,35 @@
+services:
+  anime-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: anime
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - anime_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d anime"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  anime-api:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@anime-db:5432/anime
+      DB_SSL: "false"
+    ports:
+      - "3001:3000"
+    depends_on:
+      anime-db:
+        condition: service_healthy
+
+volumes:
+  anime_postgres_data:
+    external: true
+    name: Animes_alan
